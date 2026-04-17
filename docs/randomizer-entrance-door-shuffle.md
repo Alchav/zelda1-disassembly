@@ -102,10 +102,41 @@ To get true door-graph shuffle, an external tool likely needs to inject an engin
 - Preserve special handling (dark-room transitions, doorway states, shutters, cellars, map marker behavior, room-history interactions).
 - Potentially alter minimap/status-map assumptions if room IDs no longer represent physical adjacency.
 
+## Analysis: prospect of shuffling by assigning new room IDs
+
+This is the most practical “no code injection” strategy for connection shuffling.
+
+If you treat room IDs as coordinates and **permute which room data lives at each ID**, then vanilla door traversal (`+1/-1/+0x10/-0x10`) still works, but the perceived topology changes because each coordinate now contains different room content.
+
+Example (horizontal):
+
+- Original: room `03` is left of `04`.
+- If you want rooms `A` and `B` to be horizontally connected, place room-data `A` at ID `03` and room-data `B` at ID `04`.
+- Vanilla east/west transitions now connect `A <-> B` without changing engine code.
+
+Pros:
+
+- No need to rewrite next-room logic.
+- Keeps most engine assumptions intact (scrolling, transition code, map marker math).
+- Compatible with existing door traversal machinery and many room-state systems that key by room ID.
+
+Caveats/constraints:
+
+- You must remap **all room-indexed attributes together** (A/B/C/D/E/F, room object lists, secret/item metadata, dark-room flags, etc.) so each moved room remains self-consistent.
+- Door reciprocity still needs validation after permutation (if one side is passable, neighboring side should usually be compatible).
+- Special rooms (entrance/start room, triforce/boss, scripted staircase/cellar destinations, transport stair chains) may need fixed placement rules or post-fixups.
+- Because room flags persist by room ID, this approach effectively moves progression state semantics with the destination IDs; test for unintended interactions.
+
+Bottom line for this method:
+
+- **Difficulty: Medium-High** for a robust implementation.
+- Much easier than arbitrary graph edge shuffle with engine patching.
+- Usually the best first milestone for a door-shuffle randomizer on this codebase.
+
 ## Practical implementation tiers
 
 1. **Tier 1 (Low-Medium):** only shuffle door *types* (no destination rewiring).
-2. **Tier 2 (Medium-High):** constrained destination shuffle that keeps grid-consistent adjacencies (effectively remapping room contents more than edges).
+2. **Tier 2 (Medium-High):** constrained destination shuffle that keeps grid-consistent adjacencies (typically implemented as room-ID reassignment / room-content permutation).
 3. **Tier 3 (High-Very High):** true arbitrary edge shuffle via code injection + new data tables + compatibility fixes.
 
 ## Expected difficulty
