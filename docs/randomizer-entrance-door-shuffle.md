@@ -167,3 +167,17 @@ Bottom line for this method:
 
 - **Entrance shuffle:** practical with current data structures; good candidate for an external randomizer without deep engine surgery.
 - **Door shuffle between individual dungeon rooms:** doable only at high effort for true arbitrary connectivity, because vanilla transition logic is arithmetic and grid-assumptive rather than table-routed.
+
+---
+
+## Reference implementation script in this repository
+
+This repository now includes `scripts/uw_room_bundle_shuffle.py`, a ROM patch script that:
+
+- opens a Zelda 1 ROM,
+- reads UW level-block bundles (attrs A-F per room),
+- groups rooms by directional exit mask (N/E/S/W),
+- shuffles only within each matching-exit pool (across selected levels/quests),
+- writes a patched ROM.
+
+By default it shuffles both quest block sets (`q1` + `q2`) and treats door types `1` and `7` as non-exits for pool classification.
